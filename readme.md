@@ -52,28 +52,56 @@ cmake .. -DCMAKE_INSTALL_PREFIX=/opt/unitree_robotics
 sudo make install
 ```
 For more details, see: https://github.com/unitreerobotics/unitree_sdk2
+
 #### mujoco
+Download the mujoco [release](https://github.com/google-deepmind/mujoco/releases), use the source code archive (zip or tar.gz), and extract it to the `~/.mujoco` directory. After extraction, you should have a folder like `~/.mujoco/mujoco-X.X.X` (replace `X.X.X` with your mujoco version, e.g., `mujoco-3.4.0`).  
+For the rest of the tutorial, we will use **mujoco-3.4.0** as the example.
 
-Download the mujoco [release](https://github.com/google-deepmind/mujoco/releases), and extract it to the `~/.mujoco` directory;
-
+Build mujoco from source:
+```bash
+cd ~/.mujoco/mujoco-3.4.0
+mkdir build && cd build
+cmake ..
+make -j"$(nproc)"
 ```
+
+Add a symbolic link between your mujoco installation and `unitree_mujoco`:
+
+```bash
 cd unitree_mujoco/simulate/
-ln -s ~/.mujoco/mujoco-3.3.6 mujoco
+ln -s ~/.mujoco/mujoco-3.4.0 mujoco
 ```
+
 
 ### 2. Compile unitree_mujoco
 ```bash
 cd unitree_mujoco/simulate
 mkdir build && cd build
 cmake ..
-make -j4
+make -j"$(nproc)"
 ```
+
+**Note:**
+If you encounter a **"cannot find -lmujoco"** linking error, a temporary workaround is:
+
+1. Build once (this will fail).
+2. In `unitree_mujoco/simulate/CMakeLists.txt`, temporarily comment out:
+
+   * `link_directories(mujoco/lib)`
+   * The `mujoco` entry inside `link_libraries(...)`
+3. Build again using `make -j"$(nproc)"` (this will also fail, but will refresh CMake's cache).
+4. Restore the commented lines.
+5. Build one last time — it should succeed.
+
+This workaround forces CMake to regenerate its link paths correctly when Mujoco is built from source.
+
+
 ### 3. Test:
 Run:
 ```bash
-./unitree_mujoco -r go2 -s scene_terrain.xml
+./unitree_mujoco -r h1 -s scene_terrain.xml
 ```
-You should see the mujoco simulator with the Go2 robot loaded.
+You should see the mujoco simulator with the H1 robot loaded.
 In a new terminal, run:
 ```bash
 ./test
